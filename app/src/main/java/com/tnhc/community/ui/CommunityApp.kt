@@ -11,8 +11,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
 import com.tnhc.community.data.DemoProjectRepository
 import com.tnhc.community.data.ProjectRepository
 
@@ -48,15 +50,19 @@ fun CommunityApp(repository: ProjectRepository = DemoProjectRepository) {
             )
         },
         bottomBar = {
-            NavigationBar {
-                Destination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = selectedTab == destination.name,
-                        onClick = { selectedTab = destination.name; projectId = null },
-                        icon = { Icon(destination.icon, contentDescription = null) },
-                        label = { Text(destination.name) },
-                        modifier = Modifier.testTag("tab-${destination.name}"),
-                    )
+            // Five labels share a narrow bar: cap their scale so they stay whole at large font sizes.
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale.coerceAtMost(1.3f))) {
+                NavigationBar {
+                    Destination.entries.forEach { destination ->
+                        NavigationBarItem(
+                            selected = selectedTab == destination.name,
+                            onClick = { selectedTab = destination.name; projectId = null },
+                            icon = { Icon(destination.icon, contentDescription = null) },
+                            label = { Text(destination.name, maxLines = 1, softWrap = false) },
+                            modifier = Modifier.testTag("tab-${destination.name}"),
+                        )
+                    }
                 }
             }
         },
