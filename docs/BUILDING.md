@@ -19,7 +19,7 @@ For command-line builds, set `ANDROID_HOME` to your SDK directory, or add `sdk.d
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-On Windows, use `gradlew.bat`. The connected test command requires a booted emulator or an attached phone with USB debugging enabled.
+On Windows, use `gradlew.bat`. The connected test command requires a booted emulator or an attached phone with USB debugging enabled. If a headless emulator segfaults under SwiftShader, start it with `-gpu host -feature -Vulkan`.
 
 Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
 

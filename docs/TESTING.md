@@ -1,6 +1,6 @@
 # Testing and verification
 
-The Android foundation now has runnable unit and Compose device tests. See [BUILDING.md](BUILDING.md) for commands and the [0.0.1 development record](development/0.0.1-foundation.md) for actual outcomes. Six unit tests pass; device tests compile but have not run because the available emulator crashes before ADB connection. Compilation is not device verification.
+The Android foundation now has runnable unit and Compose device tests. See [BUILDING.md](BUILDING.md) for commands and the [0.0.1 development record](development/0.0.1-foundation.md) for actual outcomes. Six unit tests and all eight Compose device tests pass (Android 16 / API 36 emulator). Compilation alone is never treated as device verification.
 
 Each feature needs evidence that its acceptance criteria pass. Record device/build, date, steps, outcome and defects. Automated checks are chosen for meaningful behavior and regression risks.
 

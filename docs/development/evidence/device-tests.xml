@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.tnhc.community.CommunityAppTest" tests="8" failures="0" errors="0" skipped="0" time="14.613" timestamp="2026-10-03T12:34:53" hostname="localhost">
+  <properties>
+    <property name="device" value="TNHC_API36(AVD) - 16" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="systemBackClosesDetailsThenReturnsHome" classname="com.tnhc.community.CommunityAppTest" time="4.113" />
+  <testcase name="emptyRepositoryExplainsState" classname="com.tnhc.community.CommunityAppTest" time="1.025" />
+  <testcase name="missingRestoredProjectCanReturnToCatalogue" classname="com.tnhc.community.CommunityAppTest" time="1.556" />
+  <testcase name="selectedProjectAndSearchSurviveSavedStateRestoration" classname="com.tnhc.community.CommunityAppTest" time="2.032" />
+  <testcase name="retryRecoversFromRepositoryFailure" classname="com.tnhc.community.CommunityAppTest" time="0.905" />
+  <testcase name="restoredDetailCanRetryWithoutLosingSelectedProject" classname="com.tnhc.community.CommunityAppTest" time="1.331" />
+  <testcase name="noMatchesCanBeCleared" classname="com.tnhc.community.CommunityAppTest" time="1.381" />
+  <testcase name="allDestinationsOpenAndProjectBackReturnsToCatalogue" classname="com.tnhc.community.CommunityAppTest" time="1.531" />
+</testsuite>
