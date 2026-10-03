@@ -1,0 +1,11 @@
+{
+  "project_id": "TNHC-COMMUNITY",
+  "name": "TNHC Community",
+  "platform": "android",
+  "version": "0.0.0",
+  "stage": "development",
+  "documentation_revision": "DOC-0002",
+  "updated_at": "2026-10-03",
+  "integration_status": "proposed schema; not integrated",
+  "target_version": "0.0.1"
+}

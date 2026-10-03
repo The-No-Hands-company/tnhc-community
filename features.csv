@@ -1,0 +1,17 @@
+id,title,status,priority,target_version,introduced_version,owner,dependencies,acceptance_criteria,evidence,issue_url,commit_sha,updated_at
+TNHC-001,Android shell and navigation,in_review,P1,0.0.1,,TNHC / Codex,,Installable Android build with five destinations and working back navigation.,Source implemented; validation recorded in docs/development/0.0.1-foundation.md; release gates pending.,,,2026-10-03
+TNHC-002,Project catalogue and detail,in_review,P1,0.0.1,,TNHC / Codex,TNHC-001,"Browse local demo projects; view stage, ownership category, tags and details; empty/error states present.",Source implemented; validation recorded in docs/development/0.0.1-foundation.md; release gates pending.,,,2026-10-03
+TNHC-003,Authentication and backend foundation,planned,P1,0.0.2,,,TNHC-001,Sign in/out; protected operations enforce server permissions; isolated test accounts.,,,,2026-10-03
+TNHC-004,Member profiles and interests,planned,P1,0.0.2,,,TNHC-003,Edit own profile and interests; another member cannot edit it.,,,,2026-10-03
+TNHC-005,Project following,planned,P1,0.0.2,,,TNHC-002;TNHC-003,Follow/unfollow persists and duplicate follows are prevented.,,,,2026-10-03
+TNHC-006,Updates and comments,planned,P1,0.0.3,,,TNHC-003;TNHC-005,Publish permitted posts/comments; official announcements require maintainer role; lists paginate.,,,,2026-10-03
+TNHC-007,Topic communities,planned,P1,0.0.3,,,TNHC-006,Discover shared topics and participate with visible author attribution.,,,,2026-10-03
+TNHC-008,Collaboration opportunities,planned,P1,0.0.4,,,TNHC-006,"Maintainers publish requests with skills, terms and open/closed state; members respond.",,,,2026-10-03
+TNHC-009,Reports blocks and moderation,planned,P1,0.0.4,,,TNHC-003;TNHC-006,Members report/block; authorised moderator reviews and records action; reporter access restricted.,,,,2026-10-03
+TNHC-010,Private messaging,planned,P1,0.0.5,,,TNHC-003;TNHC-009,Only participants access messages; retries do not duplicate sends; blocking prevents new contact.,,,,2026-10-03
+TNHC-011,Notifications and preferences,planned,P1,0.0.5,,,TNHC-005;TNHC-010,Members control notifications; taps open authorised content; blocked contact cannot notify.,,,,2026-10-03
+TNHC-012,Search and discovery,planned,P1,0.0.5,,,TNHC-002;TNHC-007,Search projects/topics by agreed fields with paginated results and empty states.,,,,2026-10-03
+TNHC-013,Recovery deletion and operations,planned,P1,0.1.0,,,TNHC-003;TNHC-009,"Recovery/deletion flows verified; support route, retention policy and tested backup restoration exist.",,,,2026-10-03
+TNHC-014,Accessibility and reliability refinement,planned,P1,0.2.0,,,TNHC-010;TNHC-012;TNHC-013,"Text scaling, accessibility navigation, interrupted requests and agreed performance targets verified.",,,,2026-10-03
+TNHC-015,Member project publishing pilot,planned,P2,1.1.0,,,TNHC-009;TNHC-014,Approved members publish projects; ownership and official/community distinction enforced.,,,,2026-10-03
+TNHC-016,Marketplace listings and enquiries,planned,P2,1.2.0,,,TNHC-015,"Listings have seller, description and enquiry route; report handling exists; checkout excluded.",,,,2026-10-03

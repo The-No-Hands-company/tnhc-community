@@ -1,0 +1,314 @@
+[
+  {
+    "id": "TNHC-001",
+    "title": "Android shell and navigation",
+    "status": "in_review",
+    "priority": "P1",
+    "target_version": "0.0.1",
+    "introduced_version": "",
+    "owner": "TNHC / Codex",
+    "dependencies": [],
+    "acceptance_criteria": [
+      "Installable Android build with five destinations and working back navigation."
+    ],
+    "evidence": "Source implemented; validation recorded in docs/development/0.0.1-foundation.md; release gates pending.",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-002",
+    "title": "Project catalogue and detail",
+    "status": "in_review",
+    "priority": "P1",
+    "target_version": "0.0.1",
+    "introduced_version": "",
+    "owner": "TNHC / Codex",
+    "dependencies": [
+      "TNHC-001"
+    ],
+    "acceptance_criteria": [
+      "Browse local demo projects; view stage, ownership category, tags and details; empty/error states present."
+    ],
+    "evidence": "Source implemented; validation recorded in docs/development/0.0.1-foundation.md; release gates pending.",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-003",
+    "title": "Authentication and backend foundation",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.2",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-001"
+    ],
+    "acceptance_criteria": [
+      "Sign in/out; protected operations enforce server permissions; isolated test accounts."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-004",
+    "title": "Member profiles and interests",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.2",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003"
+    ],
+    "acceptance_criteria": [
+      "Edit own profile and interests; another member cannot edit it."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-005",
+    "title": "Project following",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.2",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-002",
+      "TNHC-003"
+    ],
+    "acceptance_criteria": [
+      "Follow/unfollow persists and duplicate follows are prevented."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-006",
+    "title": "Updates and comments",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.3",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-005"
+    ],
+    "acceptance_criteria": [
+      "Publish permitted posts/comments; official announcements require maintainer role; lists paginate."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-007",
+    "title": "Topic communities",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.3",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-006"
+    ],
+    "acceptance_criteria": [
+      "Discover shared topics and participate with visible author attribution."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-008",
+    "title": "Collaboration opportunities",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.4",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-006"
+    ],
+    "acceptance_criteria": [
+      "Maintainers publish requests with skills, terms and open/closed state; members respond."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-009",
+    "title": "Reports blocks and moderation",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.4",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-006"
+    ],
+    "acceptance_criteria": [
+      "Members report/block; authorised moderator reviews and records action; reporter access restricted."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-010",
+    "title": "Private messaging",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.5",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-009"
+    ],
+    "acceptance_criteria": [
+      "Only participants access messages; retries do not duplicate sends; blocking prevents new contact."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-011",
+    "title": "Notifications and preferences",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.5",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-005",
+      "TNHC-010"
+    ],
+    "acceptance_criteria": [
+      "Members control notifications; taps open authorised content; blocked contact cannot notify."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-012",
+    "title": "Search and discovery",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.5",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-002",
+      "TNHC-007"
+    ],
+    "acceptance_criteria": [
+      "Search projects/topics by agreed fields with paginated results and empty states."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-013",
+    "title": "Recovery deletion and operations",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.1.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-009"
+    ],
+    "acceptance_criteria": [
+      "Recovery/deletion flows verified; support route, retention policy and tested backup restoration exist."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-014",
+    "title": "Accessibility and reliability refinement",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.2.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-010",
+      "TNHC-012",
+      "TNHC-013"
+    ],
+    "acceptance_criteria": [
+      "Text scaling, accessibility navigation, interrupted requests and agreed performance targets verified."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-015",
+    "title": "Member project publishing pilot",
+    "status": "planned",
+    "priority": "P2",
+    "target_version": "1.1.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-009",
+      "TNHC-014"
+    ],
+    "acceptance_criteria": [
+      "Approved members publish projects; ownership and official/community distinction enforced."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-016",
+    "title": "Marketplace listings and enquiries",
+    "status": "planned",
+    "priority": "P2",
+    "target_version": "1.2.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-015"
+    ],
+    "acceptance_criteria": [
+      "Listings have seller, description and enquiry route; report handling exists; checkout excluded."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-03"
+  }
+]
