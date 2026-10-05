@@ -1,7 +1,10 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -15,13 +18,54 @@ android {
         versionCode = 1
         versionName = rootProject.file("VERSION").readText().trim()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "TARGET_VERSION", "\"0.0.1\"")
+        buildConfigField("boolean", "FOUNDER_BUILD", "false")
+        buildConfigField("String", "TARGET_VERSION", "\"0.0.3\"")
+        val localConfiguration = Properties()
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(localConfiguration::load)
+        val backendUrl = providers.environmentVariable("TNHC_BACKEND_URL")
+            .orElse(providers.gradleProperty("tnhcBackendUrl"))
+            .orElse(localConfiguration.getProperty("TNHC_BACKEND_URL", ""))
+            .get()
+        val publishableKey = providers.environmentVariable("TNHC_PUBLISHABLE_KEY")
+            .orElse(providers.gradleProperty("tnhcPublishableKey"))
+            .orElse(localConfiguration.getProperty("TNHC_PUBLISHABLE_KEY", ""))
+            .get()
+        fun quoted(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        buildConfigField("String", "BACKEND_URL", quoted(backendUrl))
+        buildConfigField("String", "PUBLISHABLE_KEY", quoted(publishableKey))
+    }
+    flavorDimensions += "audience"
+    productFlavors {
+        create("member") {
+            dimension = "audience"
+        }
+        create("founder") {
+            dimension = "audience"
+            applicationIdSuffix = ".founder"
+            buildConfigField("boolean", "FOUNDER_BUILD", "true")
+        }
     }
     buildTypes {
         debug { applicationIdSuffix = ".debug" }
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    applicationVariants.all {
+        if (buildType.name == "release") {
+            val url = defaultConfig.buildConfigFields["BACKEND_URL"]?.value?.trim('"').orEmpty()
+            val key = defaultConfig.buildConfigFields["PUBLISHABLE_KEY"]?.value?.trim('"').orEmpty()
+            val validateBackend = tasks.register("validate${name.replaceFirstChar(Char::uppercase)}BackendConfig") {
+                doLast {
+                    if (url.isBlank() || !url.startsWith("https://") || key.isBlank()) {
+                        throw GradleException("Release builds require TNHC_BACKEND_URL (HTTPS) and TNHC_PUBLISHABLE_KEY")
+                    }
+                }
+            }
+            tasks.named("pre${name.replaceFirstChar(Char::uppercase)}Build").configure {
+                dependsOn(validateBackend)
+            }
         }
     }
     buildFeatures { compose = true; buildConfig = true }
@@ -35,6 +79,12 @@ android {
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.functions)
+    implementation(libs.ktor.client.android)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.compose.bom))
@@ -49,4 +99,5 @@ dependencies {
     androidTestImplementation(libs.compose.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

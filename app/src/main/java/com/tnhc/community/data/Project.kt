@@ -9,4 +9,5 @@ data class Project(
     val tags: List<String>,
     val focus: String,
     val affiliation: String,
+    val isDemo: Boolean = true,
 )

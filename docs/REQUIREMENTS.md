@@ -12,7 +12,7 @@ Connect TNHC's projects with people interested in following, discussing, testing
 - Moderator: review reports and apply documented community actions.
 - Administrator: manage role assignment and platform settings.
 
-Roles grant explicit capabilities; moderator access does not automatically grant unrestricted access to private messages. Public registration versus invitations remains an open launch decision.
+Roles grant explicit capabilities; moderator access does not automatically grant unrestricted access to private messages. The initial closed pilot is invite-only. Open registration requires a separate review after reporting, blocking and moderation work end to end.
 
 ## Functional rules
 
@@ -27,3 +27,5 @@ Design for phones with back navigation, readable text scaling, accessible touch 
 ## Release requirements
 
 Before beta, account recovery, deletion handling, moderation, data access tests, backups and a support route must work. Define measurable performance thresholds and supported Android versions during technical planning; no unmeasured performance guarantees are made here.
+
+Backend platform, scope, security boundaries and operational prerequisites are planned in [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md). No public service is deployed yet. Invite and recovery email delivery, public HTTPS, off-machine backups, machine capacity and recovery objectives must be verified before a pilot service is exposed.

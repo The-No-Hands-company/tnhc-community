@@ -1,0 +1,28 @@
+name: Backend database tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned Deno runtime
+        run: npx --yes deno@2.9.6 --version
+      - uses: docker/setup-buildx-action@v3
+      - name: Start local Supabase stack
+        run: npx --yes supabase@2.119.0 start --workdir backend
+      - name: Reset database and run SQL tests
+        run: |
+          npx --yes supabase@2.119.0 db reset --workdir backend
+          npx --yes supabase@2.119.0 test db --workdir backend
+          npx --yes deno@2.9.6 test backend/supabase/tests/functions/invite-member.test.ts
+      - name: Stop local Supabase stack
+        if: always()
+        run: npx --yes supabase@2.119.0 stop --workdir backend || true

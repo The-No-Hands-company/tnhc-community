@@ -4,13 +4,13 @@ DevTrack's actual import schema/API has not been provided. `project.json`, `feat
 
 ## Project fields
 
-project_id: TNHC-COMMUNITY; name: TNHC Community; platform: android; version: 0.0.0; stage: development; target_version: 0.0.1; documentation_revision: DOC-0002; updated_at: 2026-10-03.
+project_id: TNHC-COMMUNITY; name: TNHC Community; platform: android; version: 0.0.0; stage: development; target_version: 0.0.2; documentation_revision: DOC-0007; updated_at: 2026-10-04.
 
 ## Feature fields
 
 id, title, status, priority, target_version, introduced_version, owner, dependencies, acceptance_criteria, evidence, issue_url, commit_sha, updated_at.
 
-Empty introduced_version means not released. TNHC-001 and TNHC-002 are implemented and in_review; all other features remain planned. Dependencies identify stable feature IDs. JSON dependency/criteria fields are arrays; CSV uses semicolons for array cells. Dates are ISO 8601. Release history must retain actual versions even when future targets move.
+Empty introduced_version means not released. TNHC-001 and TNHC-002 are implemented and in_review; TNHC-003–TNHC-005 are in_review for alpha 0.0.2; later features remain planned. Dependencies identify stable feature IDs. JSON dependency/criteria fields are arrays; CSV uses semicolons for array cells. Dates are ISO 8601. Release history must retain actual versions even when future targets move.
 
 ## Updating records
 

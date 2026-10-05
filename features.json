@@ -38,7 +38,7 @@
   {
     "id": "TNHC-003",
     "title": "Authentication and backend foundation",
-    "status": "planned",
+    "status": "in_review",
     "priority": "P1",
     "target_version": "0.0.2",
     "introduced_version": "",
@@ -47,17 +47,17 @@
       "TNHC-001"
     ],
     "acceptance_criteria": [
-      "Sign in/out; protected operations enforce server permissions; isolated test accounts."
+      "Invite-only email/password sign-in/out, invitation password setup, encrypted sessions and backend permissions are verified; Google sign-in follows OAuth and account-linking review; public deployment prerequisites remain."
     ],
-    "evidence": "",
+    "evidence": "64 PostgreSQL assertions and eight invitation tests passed; Android session/deep-link restart and live catalogue checks passed; local authorization regressions verified. In review; see docs/development/0.0.2-backend-accounts.md.",
     "issue_url": "",
     "commit_sha": "",
-    "updated_at": "2026-10-03"
+    "updated_at": "2026-10-04"
   },
   {
     "id": "TNHC-004",
     "title": "Member profiles and interests",
-    "status": "planned",
+    "status": "in_review",
     "priority": "P1",
     "target_version": "0.0.2",
     "introduced_version": "",
@@ -68,15 +68,15 @@
     "acceptance_criteria": [
       "Edit own profile and interests; another member cannot edit it."
     ],
-    "evidence": "",
+    "evidence": "Profile visibility and cross-account authorization pass PostgreSQL tests; emulator verifies invited profile editing, process restoration, and encrypted logout cleanup. In review; see docs/development/0.0.2-backend-accounts.md.",
     "issue_url": "",
     "commit_sha": "",
-    "updated_at": "2026-10-03"
+    "updated_at": "2026-10-04"
   },
   {
     "id": "TNHC-005",
     "title": "Project following",
-    "status": "planned",
+    "status": "in_review",
     "priority": "P1",
     "target_version": "0.0.2",
     "introduced_version": "",
@@ -88,10 +88,10 @@
     "acceptance_criteria": [
       "Follow/unfollow persists and duplicate follows are prevented."
     ],
-    "evidence": "",
+    "evidence": "Duplicate follow and unfollow retries pass PostgreSQL and emulator checks; follows restore across app restart. In review; see docs/development/0.0.2-backend-accounts.md.",
     "issue_url": "",
     "commit_sha": "",
-    "updated_at": "2026-10-03"
+    "updated_at": "2026-10-04"
   },
   {
     "id": "TNHC-006",
@@ -106,7 +106,7 @@
       "TNHC-005"
     ],
     "acceptance_criteria": [
-      "Publish permitted posts/comments; official announcements require maintainer role; lists paginate."
+      "Publish global/community text posts with hashtags, comments, nested replies and reactions; allow text/code selection and copy; official announcements require maintainer role; lists paginate."
     ],
     "evidence": "",
     "issue_url": "",
@@ -164,7 +164,7 @@
       "TNHC-006"
     ],
     "acceptance_criteria": [
-      "Members report/block; authorised moderator reviews and records action; reporter access restricted."
+      "Members report/block; authorized moderators review and record actions; verification badges are granted through an audited process; reporter access is restricted."
     ],
     "evidence": "",
     "issue_url": "",
@@ -184,7 +184,7 @@
       "TNHC-009"
     ],
     "acceptance_criteria": [
-      "Only participants access messages; retries do not duplicate sends; blocking prevents new contact."
+      "Private real-time one-to-one text messages support quoted replies, read receipts and typing indicators; only participants access messages; retries do not duplicate sends; blocking prevents new contact."
     ],
     "evidence": "",
     "issue_url": "",
@@ -304,11 +304,192 @@
       "TNHC-015"
     ],
     "acceptance_criteria": [
-      "Listings have seller, description and enquiry route; report handling exists; checkout excluded."
+      "Listings cover project opportunities, jobs, gigs and member services with accountable seller, description and enquiry route; report handling exists; checkout excluded."
     ],
     "evidence": "",
     "issue_url": "",
     "commit_sha": "",
     "updated_at": "2026-10-03"
+  },
+  {
+    "id": "TNHC-017",
+    "title": "Founder build and community controls",
+    "status": "in_progress",
+    "priority": "P1",
+    "target_version": "0.0.3",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-006",
+      "TNHC-007"
+    ],
+    "acceptance_criteria": [
+      "Separate Founder APK with a sole server-provisioned Founder role and audited member, project, topic, post/comment moderation and app-setting controls; no embedded authority or general private-message access."
+    ],
+    "evidence": "Member unit 22/22, Founder unit 30/30; API 36 emulator instrumentation: member 18 passed/1 backend-fixture skip, Founder 19 passed/1 skip; both flavors lint/build pass. PostgreSQL reset 201 pgTAP assertions; invitation function 9/9 tests and type-check pass; Founder R8 minification completes. Two-account live-backend verification pending. See docs/development/0.0.3-founder-build.md.",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-018",
+    "title": "Organization profiles and teams",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.2.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-003",
+      "TNHC-004"
+    ],
+    "acceptance_criteria": [
+      "Organizations have distinct pages for services, team members and updates; members control affiliation; permissions distinguish individual and organization actions."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-019",
+    "title": "Offline message cache",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.0.5",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-010"
+    ],
+    "acceptance_criteria": [
+      "Recent authorized conversations remain readable from a local database offline; writes clearly show queued versus server-accepted state."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-020",
+    "title": "Media posts and push notifications",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.1.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-006",
+      "TNHC-011"
+    ],
+    "acceptance_criteria": [
+      "Members upload supported post images and receive preference-controlled push notifications that open content they may access."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-021",
+    "title": "Member and organization discovery",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.2.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-012",
+      "TNHC-018"
+    ],
+    "acceptance_criteria": [
+      "Search people and organizations by agreed industry, skills, tech stack, location and role filters with pagination and privacy-aware visibility."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-022",
+    "title": "Web community administration dashboard",
+    "status": "planned",
+    "priority": "P1",
+    "target_version": "0.1.0",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-009",
+      "TNHC-017"
+    ],
+    "acceptance_criteria": [
+      "Authorized staff review reports, moderate content, handle bans and manage community settings through audited server-checked controls."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-023",
+    "title": "Group direct messaging",
+    "status": "planned",
+    "priority": "P2",
+    "target_version": "Unscheduled",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-010",
+      "TNHC-009"
+    ],
+    "acceptance_criteria": [
+      "Group membership, message visibility, blocking, reporting and notification behavior are defined and tested before release."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-024",
+    "title": "24-hour status stories",
+    "status": "planned",
+    "priority": "P2",
+    "target_version": "Unscheduled",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-006",
+      "TNHC-009",
+      "TNHC-020"
+    ],
+    "acceptance_criteria": [
+      "Short-lived updates expire reliably and retain reporting, audience and moderation controls."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
+  },
+  {
+    "id": "TNHC-025",
+    "title": "Voice and video calling",
+    "status": "planned",
+    "priority": "P2",
+    "target_version": "Unscheduled",
+    "introduced_version": "",
+    "owner": "",
+    "dependencies": [
+      "TNHC-010",
+      "TNHC-009"
+    ],
+    "acceptance_criteria": [
+      "Calls use an approved real-time transport with consent, blocking, abuse reporting and reliable connection-state handling."
+    ],
+    "evidence": "",
+    "issue_url": "",
+    "commit_sha": "",
+    "updated_at": "2026-10-04"
   }
 ]
