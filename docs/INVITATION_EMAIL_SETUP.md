@@ -1,68 +1,67 @@
 # TNHC Community invitation email setup
 
-The Founder app calls the `invite-member` Edge Function. That function checks
-the signed-in account's server-owned administrator or Founder role, records an
-expiring invitation, and asks Supabase Auth to send its one-use invitation
+The Founder app calls the `invite-member` Edge Function. It checks the
+signed-in account's server-owned administrator or Founder role, records an
+expiring invitation, and asks Supabase Auth to send the one-use invitation
 link. The Android app never connects to Resend and must never contain a mail
 provider credential.
 
-## Configure the hosted Supabase project
+## Production SMTP settings
 
-The repository's Supabase configuration is for local development. Local Auth
-captures messages in Mailpit and does not deliver them to real recipients. For
-public invitations, configure the **hosted project used by the release APK**:
+The public Community backend is a self-hosted Supabase Compose project. Keep
+these Auth values in its private `.env` file:
 
-1. In Resend, confirm that the sending domain `tnhc.dev` is verified and create
-   an API key with sending permission. Store the key securely; it is the SMTP
-   password. The sender domain must be verified in the same Resend account.
-2. In the Supabase Dashboard, select that hosted project and open
-   **Authentication → Emails → SMTP Settings**. Enable custom SMTP and set:
+| Environment variable | Value |
+| --- | --- |
+| `SMTP_HOST` | `smtp.resend.com` |
+| `SMTP_PORT` | `465` |
+| `SMTP_USER` | `resend` |
+| `SMTP_PASS` | Resend API key restricted to `tnhc.dev` |
+| `SMTP_ADMIN_EMAIL` | `no-reply@tnhc.dev` |
+| `SMTP_SENDER_NAME` | `TNHC Community` |
 
-   | Setting | Value |
-   | --- | --- |
-   | SMTP host | `smtp.resend.com` |
-   | SMTP port | `465` |
-   | SMTP username | `resend` |
-   | SMTP password | The Resend API key |
-   | Sender email | `no-reply@tnhc.dev` |
-   | Sender name | `TNHC Community` |
+Port 465 uses implicit TLS. Keep the Resend key out of Android build settings,
+source control, application logs, and support messages. Resend must show
+`tnhc.dev` as verified for sending.
 
-   Port 465 is Resend's implicit-TLS SMTP connection. Do not use the Resend key
-   as the username, and do not put it in Android build configuration, source
-   control, application logs, or a support message.
-3. In the same hosted project's Auth URL configuration, allow the exact
-   invitation redirect `tnhccommunity://invite`. The current Android Auth
-   client expects that deep link.
-4. Build the release APK with the hosted HTTPS Supabase URL and its publishable
-   key. The service-role key and Resend key stay on the server.
-5. Sign in with the Founder account, send an invitation to an address you can
-   check, and confirm both that the email arrives and that Resend records the
-   send. Then complete the one-use link on an Android device with the app
-   installed.
+Set the Auth redirect settings in the same private `.env`:
 
-Resend accepting a message means it entered its delivery pipeline; check the
-recipient inbox and Resend's delivery status before treating the invitation as
-delivered. Use a neutral sender such as `no-reply@tnhc.dev`; the sender address
-does not itself create an inbox for replies.
+```dotenv
+SITE_URL=https://tnhc.dev
+API_EXTERNAL_URL=https://auth.tnhc.dev/auth/v1
+ADDITIONAL_REDIRECT_URLS=tnhccommunity://invite
+```
 
-## Preserve Cloudflare's incoming-mail routing
+After changing SMTP or redirect settings, restart Auth:
 
-Resend sending DNS records can coexist with Cloudflare Email Routing when they
-are on the dedicated `send` and DKIM names shown by Resend. Do not replace the
-root (`@`) MX records for the purpose of sending Community invitations. Those
-records control incoming mail and are separate from the app's Supabase Auth
-SMTP settings.
+```sh
+backend/deploy/run-production.sh restart auth
+```
+
+The production deployment procedure, Cloudflare Tunnel origin, data volumes,
+and Founder bootstrap are documented in
+[`PRODUCTION_DEPLOYMENT.md`](PRODUCTION_DEPLOYMENT.md).
+
+## Test the invitation flow
+
+Sign in with the provisioned Founder account, send one invitation to an inbox
+you can check, and confirm that it arrives. Open the one-use link on an Android
+device with the app installed. A successful Auth response means SMTP accepted
+the message for delivery; confirm the recipient inbox before treating it as
+delivered.
+
+Use a neutral sender such as `no-reply@tnhc.dev`; this address does not itself
+create an inbox for replies. Resend's sending DNS records can coexist with
+Cloudflare Email Routing when they use their dedicated `send` and DKIM names.
+Do not replace the root (`@`) MX records for Community invitations.
 
 ## Keep local development captured
 
-Do not enable external SMTP in the checked-in local `backend/supabase/config.toml`.
-Local invitation tests should continue to place mail in Mailpit. If a developer
-needs a live-provider smoke test, use an isolated, uncommitted local secret and
-a test recipient, then remove the credential afterward.
+Do not enable external SMTP in the checked-in local
+`backend/supabase/config.toml`. Local invitation tests should continue to
+place mail in Mailpit. If a developer needs a live-provider smoke test, use an
+isolated, uncommitted secret and a test recipient, then remove the credential.
 
-## What this setup does not configure
-
-This enables Supabase Auth emails for the Community app. It does not configure
-Nexus Email's separate outgoing message queue or make Nexus Email receive
-messages from Cloudflare Email Routing. Those require their own server-side
-SMTP relay and inbound bridge configuration.
+This configures Supabase Auth email for the Community app. It does not
+configure Nexus Email's separate outgoing message queue or Cloudflare inbound
+mail bridge.

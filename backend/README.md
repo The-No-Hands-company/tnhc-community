@@ -1,8 +1,9 @@
 # TNHC Community backend
 
-This directory contains the local Supabase development stack and versioned
-database migrations. The stack is for development and tests; it is not the
-public pilot server.
+This directory contains the local Supabase development setup, versioned
+database migrations, and production deployment helper. The local stack is for
+development and tests; the public pilot runs as a separate self-hosted
+Supabase Compose project.
 
 ## Tool versions
 
@@ -62,11 +63,14 @@ Mailpit at `http://127.0.0.1:54324`; external invitations require a configured
 and tested SMTP provider. Never send invitations from an unverified public
 instance.
 
-For Resend configuration in the hosted Community project, follow
+For Resend configuration in the self-hosted production Community project,
+follow
 [`../docs/INVITATION_EMAIL_SETUP.md`](../docs/INVITATION_EMAIL_SETUP.md). The
 Android app does not send mail itself: Auth sends the one-use invite email
 through the SMTP provider configured on the server. Keep local development on
-Mailpit; the checked-in local stack is not the public pilot backend.
+Mailpit; it is never the public pilot backend. See
+[`../docs/PRODUCTION_DEPLOYMENT.md`](../docs/PRODUCTION_DEPLOYMENT.md) for
+production startup, volumes, endpoint and bootstrap guidance.
 
 Serve the function locally with the CLI-provided local keys:
 

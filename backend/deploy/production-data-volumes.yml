@@ -1,0 +1,16 @@
+# The official Supabase checkout is on a filesystem without POSIX ownership
+# support. Keep Postgres and uploaded-object data in Docker-managed volumes.
+services:
+  db:
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  storage:
+    volumes:
+      - storage-data:/var/lib/storage
+  imgproxy:
+    volumes:
+      - storage-data:/var/lib/storage
+
+volumes:
+  db-data:
+  storage-data:
