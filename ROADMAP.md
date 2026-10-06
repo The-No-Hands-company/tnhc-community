@@ -1,40 +1,132 @@
-# Roadmap
+# TNHC Community roadmap
 
-Versions and milestones below are not releases. The 0.0.1 foundation is implemented and undergoing verification; see [its development record](docs/development/0.0.1-foundation.md). Alpha 0.0.2 backend/accounts work is in review; see [its development record](docs/development/0.0.2-backend-accounts.md). No deadlines are implied. Targets can change through a documented decision. Feature status is authoritative in FEATURES.md.
+This roadmap follows four delivery stages. They are ordered by user value and
+operational readiness; they are not release promises or calendar deadlines.
+The feature register in [FEATURES.md](FEATURES.md) tracks individual work and
+acceptance criteria.
 
-| Version | Stage and scope | Completion gate |
-|---|---|---|
-| 0.0.0 | Planning baseline, tracking, platform and product scope | Documentation and unresolved decisions recorded |
-| 0.0.1 | Alpha foundation: Android shell, five destinations, local project catalogue and detail | Installable Android build; clearly labelled demo data; basic navigation verified |
-| 0.0.2 | Alpha identity: invite-only email/password accounts, individual profiles and project follows; add Google sign-in after provider and account-linking review | Two test accounts remain isolated; sign-in, profile access and follows pass backend and Android checks |
-| 0.0.3 | Alpha participation: global/community text feed, project updates, comments/replies, reactions, topic discussions and separate Founder console | Member/maintainer permissions, Founder authorization/audit controls, pagination, text selection/copy, empty/error states verified |
-| 0.0.4 | Alpha trust: collaboration requests, report/block, moderator queue and verified-member/organization indicators | Reporting, blocking, verification grants and moderator actions are auditable and work end to end before outside community access |
-| 0.0.5 | Alpha communication: private 1:1 real-time text messages, quoted replies, read/typing indicators and local message caching | Message privacy, blocked-contact behavior, retry safety and offline cache behavior verified |
-| 0.1.0 | First beta: recovery/deletion, push notifications, image uploads, web-based admin dashboard and closed community pilot | Security and moderation gates pass; no critical defects; recoverable backend; pilot onboarding and operational control work |
-| 0.1.1 | Beta corrections from pilot | Fixes verified; regressions checked; release notes published |
-| 0.2.0 | Beta expansion: individual and organization profiles, member/company directory filters (industry, skills, tech stack and location), accessibility, slower-network and larger-catalogue improvements | Profile privacy and organization membership rules pass; agreed performance/accessibility checks pass on representative Android devices |
-| 1.0.0 | First stable public community release | Stable core, operating moderation, support route, accurate privacy disclosures, release and rollback checks complete |
-| 1.1.0 | Tentative member project publishing pilot | Ownership, approval and official/community labels verified |
-| 1.2.0 | Tentative marketplace discovery and enquiries | Listing rules, seller identity, abuse handling verified; no implied in-app checkout |
-| Unscheduled | 24-hour stories, group DMs, voice/video calling, transactions, events, richer matching, contributor-owned iOS | Separate privacy, moderation, reliability, cost and resourcing review before scheduling |
+## Current baseline
 
-## Core beta journey
+- Commit `0b602b4` added the curated catalogue; `5f0395f` added the shared
+  Community directory and topic feed.
+- The Supabase database is the source of truth for **32 Nexus projects, DevTrack,
+  five public topics, and one sourced DevTrack release post**.
+- Member and Founder are separate Android build variants of the same project.
+  Common product behavior lives in shared code. Founder-only controls live in
+  the Founder variant and are still authorized by the server.
+- Shared catalogue and Community features are implemented in both variants:
+  members can browse public topics and posts, join or leave topics, and publish
+  text posts after the server confirms active membership. Founder tools can
+  create topics, manage topic access and moderate content.
+- Both debug variants are installed on the development phone. The remaining
+  Stage 1 gate is end-to-end verification of shared data and authorization
+  against the configured backend.
 
-Create account → select interests → discover TNHC project → follow → discuss/update → find an opportunity → contact a collaborator → return through a relevant notification.
+## Shared data and app synchronization
 
-## Delivery phases
+There is no separate Member database and no app-to-app replication service.
+Founder controls write approved records to the shared Supabase backend, and the
+Member app reads records its account is allowed to see. Future web, iOS, or
+additional Android clients should use the same backend contracts. This keeps
+content in one place while each client presents the controls appropriate to its
+audience.
 
-The MVP follows four capability phases across the version milestones above:
+```mermaid
+flowchart LR
+    Founder[Founder app] -->|audited management actions| API[Supabase API and policies]
+    Member[Member app] -->|authorized reads and member actions| API
+    Web[Future clients] -->|same API contracts| API
+    API --> DB[(One PostgreSQL source of truth)]
+```
 
-1. **Foundation and feed (0.0.2–0.0.4):** invite-only email/password and reviewed Google sign-in; individual profiles; a global/community text feed with replies, reactions and copyable text; reporting and verification before broader access.
-2. **Connection (0.0.5):** private 1:1 text messaging and local caching first. Group messaging, media sharing and calling wait for separate privacy and reliability checks.
-3. **Expansion (0.1.0–0.2.0):** push notifications, image uploads, searchable member and organization profiles, and structured discovery filters.
-4. **Control (0.0.3–0.1.0):** the private Founder Android console is being built now; a web admin dashboard follows before the closed beta so moderation and operations have a dedicated control surface.
+The sync acceptance test is concrete: change a project or publish a topic post
+once through an authorized client, then confirm the other client sees that same
+record after refresh. Do not copy content between APKs or maintain per-app
+catalogues.
 
-Marketplace and service listings follow the core member journey. Stories and voice/video calls remain unscheduled until community usage, moderation capacity, privacy requirements and operating costs justify them.
+## Stage 1 — Finish the useful community experience
 
-## Scope discipline
+**Implemented:** members can browse public topics and posts, join or leave a
+topic, and publish text after active-member authorization. Loading, empty,
+error, and retry states are present. The Founder console can manage topics and
+moderate content. The screen and content contracts are shared; each APK is a
+separate client of the same Supabase data source.
 
-Start with selected active TNHC projects and a searchable catalogue that can grow beyond 300 entries. Avoid creating inactive discussion spaces for every project. Catalogue migration requires a separately verified source inventory; this pack does not assert those projects are already imported.
+**Next work:** verify the complete shared-data path against the configured
+backend: update a controlled test topic from the Founder app, refresh the
+Member app, and confirm the record appears once. Verify a member post appears
+to the Founder, and check rejected inactive-member and non-Founder actions.
+Use controlled test content and preserve the existing catalogue. Database
+row-level security remains the authority for membership, visibility,
+authorship, and Founder access.
 
-Payments, subscriptions, video calls, crowdfunding, automated matching, and iOS are outside the initial release. Marketplace listing and payment processing are separate features.
+**Exit gate:** the Community screen works end to end against the deployed
+backend; Member and Founder observe the same authorized data; database and
+Android tests cover allowed and denied actions; the feature register reflects
+what was actually verified.
+
+## Stage 2 — Run a safe, invite-only pilot
+
+Use the working invitation flow to bring in a small group of trusted testers.
+Verify invitation delivery, acceptance, password setup/recovery, sign-in,
+profile editing, project follows, and account isolation with more than one
+member account. Add member reporting and blocking, and a usable Founder
+moderation queue before inviting beyond that closed group. Record moderation
+actions and keep private conversations outside general Founder access.
+
+**Exit gate:** invitations and account recovery work for real recipients;
+members cannot access one another's private data; report, block, moderation,
+and Founder authorization paths have end-to-end tests; the pilot has a support
+contact and a process for handling abuse reports.
+
+## Stage 3 — Make the service ready for a wider release
+
+Complete account deletion and retention behavior, privacy and support
+information, operational monitoring, rate limits, and a tested backup-and-
+restore process using a backup stored away from the host. Confirm migration
+and rollback procedures, production signing and versioning, installation on
+representative Android devices, and a release checklist. Resolve critical
+security, moderation, accessibility, or reliability defects before widening
+access.
+
+**Exit gate:** a clean-environment restore has been demonstrated; recovery,
+deletion, and privacy behavior are documented and tested; there are no known
+critical release blockers; signed release artifacts and rollback steps are
+verified.
+
+## Stage 4 — Expand from pilot evidence
+
+Grow capabilities in this order, based on what members actually need:
+
+1. **Organization profiles and directory:** distinct organization pages,
+   membership/affiliation controls, and privacy-aware filters for people and
+   organizations.
+2. **Opportunities:** project roles, jobs, gigs, and services with clear owners,
+   terms, status, and an enquiry route.
+3. **One-to-one messaging:** private text conversations, blocking behavior,
+   safe retries, and clear delivery state; add push and offline caching only
+   with their privacy and reliability tests.
+
+Each capability uses the same backend and permissions model. Sequence and scope
+can change after pilot feedback; do not ship features only to match a version
+number.
+
+## Deferred until separately justified
+
+Stories, group messaging, voice/video calling, marketplace transactions,
+events, and automated matching remain unscheduled. Revisit them only after
+community use demonstrates demand and the privacy, moderation, reliability,
+maintenance, and cost requirements are understood. Payments and public access
+require explicit product and operational decisions.
+
+## Delivery principles
+
+- Keep invite-only access until safety and moderation gates pass.
+- Store shared product data once; keep Member and Founder differences in
+  permissions and presentation, not duplicated records.
+- Make additive database migrations and test server permissions independently
+  of client visibility.
+- Promote a feature only when its acceptance evidence is recorded in
+  [FEATURES.md](FEATURES.md); a screen or schema alone is not completion.
+- Do not promise dates. Adjust priorities with documented decisions and pilot
+  evidence.
