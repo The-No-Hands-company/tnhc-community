@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(21);
 
 select has_column('public', 'projects', 'website_url', 'projects retain a public product URL');
 select has_column('public', 'projects', 'repository_url', 'projects retain source repository URLs');
@@ -21,6 +21,43 @@ select ok(not exists (select 1 from public.platform_roles where role = 'founder'
   (select count(*)::integer from public.posts p join public.topics t on t.id = p.topic_id
     where t.slug = 'project-releases' and p.body like '%https://zajfan.tnhc.dev/devlog/devtrack-1-0-released/%') = 1,
   'a configured Founder account receives the sourced DevTrack release post');
+select ok(not exists (select 1 from public.platform_roles where role = 'founder') or
+  (select count(*)::integer from public.posts p join public.topics t on t.id = p.topic_id
+    where p.id in (
+      'a2026100-0000-4000-8000-000000000002',
+      'a2026100-0000-4000-8000-000000000003',
+      'a2026100-0000-4000-8000-000000000004',
+      'a2026100-0000-4000-8000-000000000005'
+    ) and t.slug in ('start-here', 'nexus-and-self-hosting', 'developer-workshop', 'creative-projects')) = 4,
+  'a configured Founder account receives one starter post in each remaining public topic');
+select ok(not exists (select 1 from public.platform_roles where role = 'founder') or
+  (select count(distinct p.author_id)::integer = 1
+    and bool_and(p.author_id = (select user_id from public.platform_roles where role = 'founder'))
+    and bool_and(p.visibility = 'public' and p.moderation_state = 'visible')
+   from public.posts p
+   where p.id in (
+     'a2026100-0000-4000-8000-000000000002',
+     'a2026100-0000-4000-8000-000000000003',
+     'a2026100-0000-4000-8000-000000000004',
+     'a2026100-0000-4000-8000-000000000005'
+   )),
+  'starter posts are public visible content authored by the configured Founder');
+select ok(not exists (select 1 from public.platform_roles where role = 'founder') or
+  (select count(*)::integer = 4 and bool_and(case t.slug
+      when 'start-here' then p.body like '%https://tnhc.dev/%'
+      when 'nexus-and-self-hosting' then p.body like '%https://github.com/The-No-Hands-company/Nexus-Systems%'
+      when 'developer-workshop' then p.body like '%https://github.com/The-No-Hands-company/Nexus-Hosting%'
+      when 'creative-projects' then p.body like '%https://github.com/The-No-Hands-company/Nexus-Modeling%'
+      else false
+    end)
+   from public.posts p join public.topics t on t.id = p.topic_id
+   where p.id in (
+     'a2026100-0000-4000-8000-000000000002',
+     'a2026100-0000-4000-8000-000000000003',
+     'a2026100-0000-4000-8000-000000000004',
+     'a2026100-0000-4000-8000-000000000005'
+   )),
+  'each starter post cites the corresponding official HTTPS source');
 select is((select count(*)::integer from public.projects where website_url is not null and website_url !~ '^https://'), 0, 'catalogue website links use HTTPS');
 select is((select count(*)::integer from public.projects where repository_url is not null and repository_url !~ '^https://'), 0, 'catalogue source links use HTTPS');
 select is((select count(*)::integer from jsonb_array_elements(public.list_projects(null, 7, null, null, null)->'items') item where item->>'stage' = 'released'), 7, 'all released projects sort ahead of beta and development');
