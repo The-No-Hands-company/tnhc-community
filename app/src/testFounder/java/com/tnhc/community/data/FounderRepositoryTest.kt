@@ -94,6 +94,36 @@ class FounderRepositoryTest {
         assertEquals(null, remote.moderationChange)
     }
 
+    @Test fun inDevelopmentIsAnAcceptedProjectStage() = runBlocking {
+        val remote = FakeFounderRemote()
+        val draft = FounderProjectDraft(null, "nexus-sample", "official", "Nexus Sample", "A real project", "in_development", listOf("nexus"), "public")
+
+        DefaultFounderRepository(remote).upsertProject(draft)
+
+        assertEquals(draft, remote.projectDraft)
+    }
+
+    @Test fun projectLinksMustUseHttpsBeforeSaving() {
+        val remote = FakeFounderRemote()
+        val project = FounderProjectDraft(null, "nexus-sample", "official", "Nexus Sample", "A real project", "in_development",
+            listOf("nexus"), "public", "http://example.com", "https://github.com/example/project")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { DefaultFounderRepository(remote).upsertProject(project) }
+        }
+        assertEquals(null, remote.projectDraft)
+    }
+
+    @Test fun validProjectLinksAreSavedWithTheDraft() = runBlocking {
+        val remote = FakeFounderRemote()
+        val draft = FounderProjectDraft(null, "nexus-sample", "official", "Nexus Sample", "A real project", "in_development",
+            listOf("nexus"), "public", "https://tnhc.dev/projects/nexus-sample", "https://github.com/The-No-Hands-company/Nexus-Systems")
+
+        DefaultFounderRepository(remote).upsertProject(draft)
+
+        assertEquals(draft, remote.projectDraft)
+    }
+
     private class FakeFounderRemote : FounderRemoteDataSource {
         var memberCursor: String? = null
         var memberLimit: Int? = null

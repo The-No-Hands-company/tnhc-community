@@ -10,4 +10,14 @@ data class Project(
     val focus: String,
     val affiliation: String,
     val isDemo: Boolean = true,
+    val websiteUrl: String? = null,
+    val repositoryUrl: String? = null,
+    val statusAsOf: String? = null,
 )
+
+fun projectStageLabel(stage: String): String = when (stage) {
+    "in_development" -> "In development"
+    "released" -> "Released"
+    "beta" -> "Beta"
+    else -> stage.replace('_', ' ').replaceFirstChar(Char::uppercase)
+}

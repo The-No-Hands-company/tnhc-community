@@ -6,6 +6,7 @@ insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at) 
  ('90000000-0000-0000-0000-000000000001','authenticated','authenticated','content-founder@example.test','',now()),
  ('90000000-0000-0000-0000-000000000002','authenticated','authenticated','content-member@example.test','',now());
 update public.profiles set account_state='active' where id in ('90000000-0000-0000-0000-000000000001','90000000-0000-0000-0000-000000000002');
+delete from public.platform_roles where role = 'founder';
 insert into public.platform_roles(user_id,role) values('90000000-0000-0000-0000-000000000001','founder');
 insert into public.topics(id,slug,title,visibility) values('90000000-0000-0000-0000-000000000010','review-topic','Review Topic','public');
 insert into public.posts(id,author_id,topic_id,body) values('90000000-0000-0000-0000-000000000020','90000000-0000-0000-0000-000000000002','90000000-0000-0000-0000-000000000010','review post body');

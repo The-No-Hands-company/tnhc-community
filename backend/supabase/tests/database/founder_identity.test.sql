@@ -17,6 +17,7 @@ values
 update public.profiles set account_state='active', visibility='private' where id in (
  '50000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002',
  '50000000-0000-0000-0000-000000000003');
+delete from public.platform_roles where role = 'founder';
 insert into public.platform_roles (user_id, role)
 values ('50000000-0000-0000-0000-000000000001', 'founder'),
  ('50000000-0000-0000-0000-000000000002', 'administrator');

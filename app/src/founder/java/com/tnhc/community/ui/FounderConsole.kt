@@ -81,6 +81,8 @@ fun FounderConsoleScreen(repository: FounderRepository, localEmailCapture: Boole
     var projectStage by remember { mutableStateOf("idea") }
     var projectVisibility by remember { mutableStateOf("public") }
     var projectTags by remember { mutableStateOf("") }
+    var projectWebsiteUrl by remember { mutableStateOf("") }
+    var projectRepositoryUrl by remember { mutableStateOf("") }
     var topicId by remember { mutableStateOf<String?>(null) }
     var topicSlug by remember { mutableStateOf("") }
     var topicTitle by remember { mutableStateOf("") }
@@ -272,6 +274,7 @@ fun FounderConsoleScreen(repository: FounderRepository, localEmailCapture: Boole
                         projectId = project.id; projectSlug = project.slug; projectTitle = project.title
                         projectSummary = project.summary; projectOwner = project.ownerCategory; projectStage = project.stage
                         projectVisibility = project.visibility; projectTags = project.tags.joinToString(", ")
+                        projectWebsiteUrl = project.websiteUrl.orEmpty(); projectRepositoryUrl = project.repositoryUrl.orEmpty()
                     }, modifier = Modifier.testTag("founder-project-${project.id}")) {
                         Text("${project.title} · ${project.stage} · ${project.visibility}")
                     }
@@ -283,12 +286,15 @@ fun FounderConsoleScreen(repository: FounderRepository, localEmailCapture: Boole
                 OutlinedTextField(projectStage, { projectStage = it }, label = { Text("Stage") }, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(projectVisibility, { projectVisibility = it }, label = { Text("Visibility: public, members, private") }, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(projectTags, { projectTags = it }, label = { Text("Tags, comma separated") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(projectWebsiteUrl, { projectWebsiteUrl = it }, label = { Text("Project website URL (HTTPS)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(projectRepositoryUrl, { projectRepositoryUrl = it }, label = { Text("Source repository URL (HTTPS)") }, modifier = Modifier.fillMaxWidth())
                 Button(enabled = !busyAction, onClick = {
                     busyAction = true; error = null; notice = null
                     scope.launch {
                         try {
                             repository.upsertProject(FounderProjectDraft(projectId, projectSlug, projectOwner, projectTitle, projectSummary,
-                                projectStage, projectTags.split(',').map(String::trim).filter(String::isNotEmpty), projectVisibility))
+                                projectStage, projectTags.split(',').map(String::trim).filter(String::isNotEmpty), projectVisibility,
+                                projectWebsiteUrl.trim().ifBlank { null }, projectRepositoryUrl.trim().ifBlank { null }))
                             val page = repository.loadProjects(); projects = page.projects; projectsNextCursor = page.nextCursor
                             appendProjectsPage = false; notice = "Project saved and read back."; projectId = projects.firstOrNull { it.slug == projectSlug }?.id
                         } catch (cancelled: CancellationException) { throw cancelled }
@@ -296,7 +302,7 @@ fun FounderConsoleScreen(repository: FounderRepository, localEmailCapture: Boole
                         finally { busyAction = false }
                     }
                 }, modifier = Modifier.testTag("founder-save-project")) { Text(if (projectId == null) "Create project" else "Save project") }
-                TextButton(onClick = { projectId = null; projectSlug = ""; projectTitle = ""; projectSummary = ""; projectOwner = "community"; projectStage = "idea"; projectVisibility = "public"; projectTags = "" }) { Text("New project") }
+                TextButton(onClick = { projectId = null; projectSlug = ""; projectTitle = ""; projectSummary = ""; projectOwner = "community"; projectStage = "idea"; projectVisibility = "public"; projectTags = ""; projectWebsiteUrl = ""; projectRepositoryUrl = "" }) { Text("New project") }
                 if (projectsNextCursor != null) OutlinedButton(onClick = { appendProjectsPage = true; refresh++ }, modifier = Modifier.testTag("founder-project-load-more")) { Text("Load more projects") }
                 Text("Assign an active member to a project", style = MaterialTheme.typography.titleMedium)
                 OutlinedTextField(projectMemberId, { projectMemberId = it }, label = { Text("Member account ID") }, modifier = Modifier.fillMaxWidth())

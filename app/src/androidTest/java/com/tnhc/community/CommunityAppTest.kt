@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import com.tnhc.community.ui.CommunityApp
 import com.tnhc.community.ui.TnhcTheme
+import com.tnhc.community.ui.ProjectDetail
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
@@ -43,6 +44,19 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CommunityAppTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
+
+    @Test fun projectDetailShowsOnlyAvailableSourceActions() {
+        val linkedProject = Project("linked", "Nexus", "Real-time chat", "Core", "Released", listOf("nexus"), "Chat", "Official",
+            isDemo = false, websiteUrl = "https://chat.tnhc.dev/", repositoryUrl = "https://github.com/The-No-Hands-company/Nexus-Systems", statusAsOf = "2026-08-19")
+        compose.setContent { TnhcTheme { ProjectDetail(linkedProject, onBack = {}) } }
+        compose.onNodeWithTag("project-website").assertIsDisplayed()
+        compose.onNodeWithTag("project-repository").assertIsDisplayed()
+        compose.onNodeWithText("Source date · 2026-08-19").assertIsDisplayed()
+
+        compose.setContent { TnhcTheme { ProjectDetail(linkedProject.copy(websiteUrl = null, repositoryUrl = null), onBack = {}) } }
+        compose.onNodeWithTag("project-website").assertDoesNotExist()
+        compose.onNodeWithTag("project-repository").assertDoesNotExist()
+    }
 
     @Test fun allDestinationsOpenAndProjectBackReturnsToCatalogue() {
         compose.setContent { TnhcTheme { CommunityApp() } }

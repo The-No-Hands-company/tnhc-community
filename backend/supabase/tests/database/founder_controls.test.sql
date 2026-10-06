@@ -15,6 +15,7 @@ values
 update public.profiles set account_state='active' where id in (
  '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002',
  '60000000-0000-0000-0000-000000000003');
+delete from public.platform_roles where role = 'founder';
 insert into public.platform_roles (user_id, role)
 values ('60000000-0000-0000-0000-000000000001', 'founder');
 

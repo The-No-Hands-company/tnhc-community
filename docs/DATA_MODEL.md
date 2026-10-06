@@ -11,7 +11,7 @@ planned rows are not yet database tables.
 |---|---|
 | Auth user / Profile (implemented) | Auth UUID, unique lowercase handle, display name, bio, interests, visibility and account state; profile ID references `auth.users` |
 | Platform role (implemented) | User, administrator/moderator/Founder role, grantor and timestamp; clients cannot assign roles; only one operator-provisioned Founder exists |
-| Project (implemented) | UUID, unique slug, owner category, title, summary, stage, tags and visibility |
+| Project (implemented) | UUID, unique slug, owner category, title, summary, lifecycle stage, tags, visibility, optional HTTPS website/repository URLs, and optional status-source date |
 | Project membership (implemented) | Project, user and owner/maintainer/contributor/tester role; unique project/user pair |
 | Follow (implemented) | Project supplied by the caller; owner UUID defaults from `auth.uid()`; unique pair, private to the follower |
 | Invitation (implemented) | Normalized email, inviter, expiry, accepted timestamp and Auth user reference; confirmation secrets remain in Supabase Auth |
@@ -36,6 +36,11 @@ author to be an owner or maintainer. Topic posts require topic membership.
 Comments follow the parent post's access rules. Authors can edit and delete
 their own posts and comments; moderation state remains server-controlled.
 Hidden or removed content is excluded from public reads.
+
+The project catalogue exposes public records through the paged
+`list_projects` RPC. Released items sort before beta and in-development items;
+source dates remain visible so status claims keep their provenance. Founder
+edits validate optional links as HTTPS before saving them.
 
 The deployed meanings of project visibility are: `public` is readable by
 anyone, `members` by active members, and `private` by explicitly assigned

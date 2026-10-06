@@ -44,6 +44,18 @@ data class ProjectFilter(val stage: String? = null, val ownerCategory: String? =
 
 data class ProjectPage(val projects: List<Project>, val nextCursor: String?)
 
+suspend fun CommunityRepository.loadAllProjects(filter: ProjectFilter = ProjectFilter(), maxPages: Int = 10): List<Project> {
+    require(maxPages in 1..20) { "Project page limit must be between 1 and 20" }
+    val projects = mutableListOf<Project>()
+    var cursor: String? = null
+    repeat(maxPages) {
+        val page = loadProjects(cursor, filter)
+        projects += page.projects
+        cursor = page.nextCursor ?: return projects
+    }
+    return projects
+}
+
 data class MemberProfile(
     val id: String,
     val handle: String,
@@ -51,6 +63,22 @@ data class MemberProfile(
     val bio: String?,
     val interests: List<String>,
     val visibility: String,
+)
+
+data class CommunityTopic(
+    val id: String,
+    val slug: String,
+    val title: String,
+    val description: String,
+    val visibility: String,
+)
+
+data class CommunityPost(
+    val id: String,
+    val authorId: String,
+    val topicId: String,
+    val body: String,
+    val createdAt: String,
 )
 
 interface CommunityRepository {
@@ -65,6 +93,11 @@ interface CommunityRepository {
     suspend fun loadFollowedProjectIds(): Set<String>
     suspend fun updateProfile(displayName: String?, bio: String?, interests: List<String>, visibility: String)
     suspend fun setProjectFollow(projectId: String, followed: Boolean)
+    suspend fun loadTopics(): List<CommunityTopic> = emptyList()
+    suspend fun loadJoinedTopicIds(): Set<String> = emptySet()
+    suspend fun setTopicMembership(topicId: String, joined: Boolean) = Unit
+    suspend fun loadTopicPosts(topicId: String): List<CommunityPost> = emptyList()
+    suspend fun createTopicPost(topicId: String, body: String) = Unit
 }
 
 interface CommunityRemoteDataSource {
@@ -79,6 +112,11 @@ interface CommunityRemoteDataSource {
     suspend fun loadFollowedProjectIds(): Set<String>
     suspend fun updateProfile(displayName: String?, bio: String?, interests: List<String>, visibility: String)
     suspend fun setProjectFollow(projectId: String, followed: Boolean)
+    suspend fun loadTopics(): List<CommunityTopic> = emptyList()
+    suspend fun loadJoinedTopicIds(): Set<String> = emptySet()
+    suspend fun setTopicMembership(topicId: String, joined: Boolean) = Unit
+    suspend fun loadTopicPosts(topicId: String): List<CommunityPost> = emptyList()
+    suspend fun createTopicPost(topicId: String, body: String) = Unit
 }
 
 class DefaultCommunityRepository(private val remote: CommunityRemoteDataSource) : CommunityRepository {
@@ -99,6 +137,25 @@ class DefaultCommunityRepository(private val remote: CommunityRemoteDataSource) 
         remote.updateProfile(displayName?.trim(), bio?.trim(), interests.map(String::trim).filter(String::isNotEmpty).distinct(), visibility)
 
     override suspend fun setProjectFollow(projectId: String, followed: Boolean) = remote.setProjectFollow(projectId, followed)
+
+    override suspend fun loadTopics() = remote.loadTopics().sortedBy { it.title.lowercase() }
+    override suspend fun loadJoinedTopicIds(): Set<String> = if (session.value == null) emptySet() else remote.loadJoinedTopicIds()
+    override suspend fun setTopicMembership(topicId: String, joined: Boolean) {
+        require(topicId.isNotBlank()) { "Choose a community first" }
+        check(session.value != null) { "Sign in with your invitation to join communities" }
+        remote.setTopicMembership(topicId, joined)
+    }
+    override suspend fun loadTopicPosts(topicId: String): List<CommunityPost> {
+        require(topicId.isNotBlank()) { "Choose a community first" }
+        return remote.loadTopicPosts(topicId).sortedByDescending { it.createdAt }.take(50)
+    }
+    override suspend fun createTopicPost(topicId: String, body: String) {
+        require(topicId.isNotBlank()) { "Choose a community first" }
+        check(session.value != null) { "Sign in with your invitation to post" }
+        val normalizedBody = body.trim()
+        require(normalizedBody.isNotEmpty() && normalizedBody.length <= 5000) { "Posts must contain 1 to 5000 characters" }
+        remote.createTopicPost(topicId, normalizedBody)
+    }
 }
 
 class EncryptedAndroidSessionManager(context: Context) : SessionManager {
@@ -182,6 +239,9 @@ private data class ProjectRecord(
     val stage: String,
     val tags: List<String>,
     val visibility: String,
+    val website_url: String? = null,
+    val repository_url: String? = null,
+    val status_as_of: String? = null,
 )
 
 @Serializable
@@ -202,6 +262,11 @@ private data class FollowedProjectRecord(val project_id: String)
 
 @Serializable
 private data class PlatformRoleRecord(val role: String)
+@Serializable private data class TopicRecord(val id: String, val slug: String, val title: String, val description: String, val visibility: String)
+@Serializable private data class TopicMembershipRecord(val topic_id: String)
+@Serializable private data class TopicMembershipInsert(val topic_id: String)
+@Serializable private data class TopicPostRecord(val id: String, val author_id: String, val topic_id: String, val body: String, val created_at: String)
+@Serializable private data class TopicPostInsert(val topic_id: String, val body: String)
 
 class SupabaseCommunityRemoteDataSource internal constructor(internal val client: SupabaseClient) : CommunityRemoteDataSource {
     constructor(context: Context, config: BackendConfig) : this(createSupabaseClient(config.url, config.publishableKey) {
@@ -270,11 +335,14 @@ class SupabaseCommunityRemoteDataSource internal constructor(internal val client
                 title = record.title,
                 summary = record.summary,
                 category = record.tags.firstOrNull() ?: record.owner_category,
-                stage = record.stage.replaceFirstChar(Char::uppercase),
+                stage = projectStageLabel(record.stage),
                 tags = record.tags,
                 focus = record.summary,
                 affiliation = record.owner_category,
                 isDemo = false,
+                websiteUrl = record.website_url,
+                repositoryUrl = record.repository_url,
+                statusAsOf = record.status_as_of,
             )
         }, response.next_cursor)
     }
@@ -324,6 +392,42 @@ class SupabaseCommunityRemoteDataSource internal constructor(internal val client
                 }
             }
         }
+    }
+
+    override suspend fun loadTopics(): List<CommunityTopic> = client.from("topics").select {
+        filter { eq("visibility", "public") }
+    }.decodeList<TopicRecord>().map { CommunityTopic(it.id, it.slug, it.title, it.description, it.visibility) }
+
+    override suspend fun loadJoinedTopicIds(): Set<String> {
+        val id = requireMemberId()
+        return client.from("topic_memberships").select {
+            filter { eq("user_id", id) }
+        }.decodeList<TopicMembershipRecord>().mapTo(linkedSetOf()) { it.topic_id }
+    }
+
+    override suspend fun setTopicMembership(topicId: String, joined: Boolean) {
+        val id = requireMemberId()
+        if (joined) {
+            client.from("topic_memberships").upsert(TopicMembershipInsert(topic_id = topicId)) {
+                onConflict = "topic_id,user_id"
+                ignoreDuplicates = true
+            }
+        } else {
+            client.from("topic_memberships").delete {
+                filter { eq("topic_id", topicId); eq("user_id", id) }
+            }
+        }
+    }
+
+    override suspend fun loadTopicPosts(topicId: String): List<CommunityPost> = client.from("posts").select {
+        filter { eq("topic_id", topicId); eq("moderation_state", "visible") }
+        limit(50)
+    }.decodeList<TopicPostRecord>()
+        .map { CommunityPost(it.id, it.author_id, it.topic_id, it.body, it.created_at) }
+
+    override suspend fun createTopicPost(topicId: String, body: String) {
+        requireMemberId()
+        client.from("posts").insert(TopicPostInsert(topic_id = topicId, body = body))
     }
 
     override fun handleAuthLink(intent: Intent) {

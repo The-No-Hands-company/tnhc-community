@@ -9,6 +9,12 @@ class ProjectRepositoryTest {
         Project("b", "Workbench", "Tools for creators", "Tools", "Alpha", listOf("Desktop"), "Editing", "Community"),
     )
 
+    @Test fun canonicalProjectStagesHaveReadableLabels() {
+        assertEquals("Released", projectStageLabel("released"))
+        assertEquals("Beta", projectStageLabel("beta"))
+        assertEquals("In development", projectStageLabel("in_development"))
+    }
+
     @Test fun searchIgnoresCaseAndSurroundingWhitespace() {
         assertEquals(listOf("a"), filterProjects(projects, "  ORbIt  ", null).map { it.id })
     }

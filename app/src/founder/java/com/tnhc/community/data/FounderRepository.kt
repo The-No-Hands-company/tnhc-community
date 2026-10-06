@@ -41,9 +41,11 @@ data class FounderAuditPage(val entries: List<FounderAuditEntry>, val nextCursor
 
 data class FounderAppSetting(val key: String, val value: JsonElement, val updatedBy: String, val updatedAt: String)
 
-data class FounderProject(val id: String, val slug: String, val ownerCategory: String, val title: String, val summary: String, val stage: String, val tags: List<String>, val visibility: String)
+data class FounderProject(val id: String, val slug: String, val ownerCategory: String, val title: String, val summary: String, val stage: String, val tags: List<String>, val visibility: String,
+    val websiteUrl: String? = null, val repositoryUrl: String? = null, val statusAsOf: String? = null)
 data class FounderProjectPage(val projects: List<FounderProject>, val nextCursor: String?)
-data class FounderProjectDraft(val id: String?, val slug: String, val ownerCategory: String, val title: String, val summary: String, val stage: String, val tags: List<String>, val visibility: String)
+data class FounderProjectDraft(val id: String?, val slug: String, val ownerCategory: String, val title: String, val summary: String, val stage: String, val tags: List<String>, val visibility: String,
+    val websiteUrl: String? = null, val repositoryUrl: String? = null)
 data class FounderTopic(val id: String, val slug: String, val title: String, val description: String, val visibility: String)
 data class FounderTopicPage(val topics: List<FounderTopic>, val nextCursor: String?)
 data class FounderTopicDraft(val id: String?, val slug: String, val title: String, val description: String, val visibility: String)
@@ -128,7 +130,8 @@ class DefaultFounderRepository(private val remote: FounderRemoteDataSource) : Fo
     override suspend fun upsertProject(project: FounderProjectDraft) {
         require(SLUG.matches(project.slug) && project.title.trim().isNotEmpty() && project.title.trim().length <= 160 &&
             project.summary.length <= 2000 && project.ownerCategory in OWNER_CATEGORIES && project.stage in PROJECT_STAGES &&
-            project.visibility in VISIBILITIES && project.tags.size <= 32 && project.tags.all { it.isNotBlank() && it.length <= 48 }) {
+            project.visibility in VISIBILITIES && project.tags.size <= 32 && project.tags.all { it.isNotBlank() && it.length <= 48 } &&
+            validHttpsUrl(project.websiteUrl) && validHttpsUrl(project.repositoryUrl)) {
             "Check the project fields and try again"
         }
         remote.upsertProject(project.copy(slug = project.slug.trim(), title = project.title.trim(), tags = project.tags.map(String::trim)))
@@ -159,12 +162,17 @@ class DefaultFounderRepository(private val remote: FounderRemoteDataSource) : Fo
         val EMAIL = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
         val SLUG = Regex("^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$")
         val OWNER_CATEGORIES = setOf("official", "community", "partner")
-        val PROJECT_STAGES = setOf("idea", "prototype", "alpha", "beta", "released", "paused", "archived")
+        val PROJECT_STAGES = setOf("idea", "prototype", "alpha", "beta", "released", "in_development", "paused", "archived")
         val PROJECT_ROLES = setOf("owner", "maintainer", "contributor", "tester")
         val VISIBILITIES = setOf("public", "members", "private")
         val CONTENT_TYPES = setOf("post", "comment")
         val CONTENT_STATES = setOf("visible", "hidden", "removed")
     }
+
+    private fun validHttpsUrl(value: String?): Boolean = value == null ||
+        (value.length <= 2048 && value == value.trim() && HTTPS_URL.matches(value))
+
+    private val HTTPS_URL = Regex("^https://[^/\\s]+(?:/.*)?$")
 }
 
 class SupabaseFounderRemoteDataSource internal constructor(private val client: SupabaseClient) : FounderRemoteDataSource {
@@ -203,7 +211,8 @@ class SupabaseFounderRemoteDataSource internal constructor(private val client: S
     override suspend fun loadProjects(cursor: String?): FounderProjectPage = client.postgrest.rpc(
         "list_projects", jsonCodec.encodeToJsonElement(FounderProjectListRequest(cursor)).jsonObject,
     ).decodeAs<FounderProjectPageResponse>().let { response ->
-        FounderProjectPage(response.items.map { FounderProject(it.id, it.slug, it.ownerCategory, it.title, it.summary, it.stage, it.tags, it.visibility) }, response.nextCursor)
+        FounderProjectPage(response.items.map { FounderProject(it.id, it.slug, it.ownerCategory, it.title, it.summary, it.stage, it.tags, it.visibility,
+            it.websiteUrl, it.repositoryUrl, it.statusAsOf) }, response.nextCursor)
     }
 
     override suspend fun loadTopics(cursor: String?): FounderTopicPage = client.postgrest.rpc(
@@ -215,6 +224,7 @@ class SupabaseFounderRemoteDataSource internal constructor(private val client: S
     override suspend fun upsertProject(project: FounderProjectDraft) {
         client.postgrest.rpc("founder_upsert_project", jsonCodec.encodeToJsonElement(FounderUpsertProjectRequest(
             project.id, project.slug, project.ownerCategory, project.title, project.summary, project.stage, project.tags, project.visibility,
+            project.websiteUrl, project.repositoryUrl,
         )).jsonObject)
     }
 
@@ -264,7 +274,8 @@ private data class FounderProjectListRequest(@SerialName("p_cursor") val cursor:
 @Serializable
 private data class FounderUpsertProjectRequest(@SerialName("p_project_id") val projectId: String?, @SerialName("p_slug") val slug: String,
     @SerialName("p_owner_category") val ownerCategory: String, @SerialName("p_title") val title: String, @SerialName("p_summary") val summary: String,
-    @SerialName("p_stage") val stage: String, @SerialName("p_tags") val tags: List<String>, @SerialName("p_visibility") val visibility: String)
+    @SerialName("p_stage") val stage: String, @SerialName("p_tags") val tags: List<String>, @SerialName("p_visibility") val visibility: String,
+    @SerialName("p_website_url") val websiteUrl: String?, @SerialName("p_repository_url") val repositoryUrl: String?)
 @Serializable
 private data class FounderSetProjectMembershipRequest(@SerialName("p_project_id") val projectId: String, @SerialName("p_user_id") val userId: String, @SerialName("p_role") val role: String?)
 @Serializable
@@ -334,7 +345,9 @@ private data class FounderAuditPageResponse(val items: List<FounderAuditRecord>,
 
 @Serializable
 private data class FounderProjectRecord(val id: String, val slug: String, @SerialName("owner_category") val ownerCategory: String, val title: String,
-    val summary: String, val stage: String, val tags: List<String>, val visibility: String)
+    val summary: String, val stage: String, val tags: List<String>, val visibility: String,
+    @SerialName("website_url") val websiteUrl: String? = null, @SerialName("repository_url") val repositoryUrl: String? = null,
+    @SerialName("status_as_of") val statusAsOf: String? = null)
 @Serializable
 private data class FounderProjectPageResponse(val items: List<FounderProjectRecord>, @SerialName("next_cursor") val nextCursor: String?)
 @Serializable

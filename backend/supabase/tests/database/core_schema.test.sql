@@ -67,7 +67,7 @@ insert into public.project_memberships (project_id, user_id, role) values
   ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'tester');
 
 set local role anon;
-select is((select count(*)::integer from public.projects), 3, 'anonymous visitors see public projects only');
+select is((select count(*)::integer from public.projects where id in ('20000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000003')), 1, 'anonymous visitors see only the public project among the policy fixtures');
 select is(jsonb_array_length((public.list_projects(null, 1, null, null, null)->'items')), 1, 'catalogue RPC returns a bounded first page');
 select ok((public.list_projects(null, 1, null, null, null)->>'next_cursor') is not null, 'catalogue RPC returns an opaque next cursor');
 select is(jsonb_array_length((public.list_projects(public.list_projects(null, 1, null, null, null)->>'next_cursor', 1, null, null, null)->'items')), 1, 'catalogue cursor retrieves the next page');
@@ -78,8 +78,8 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select is((select count(*)::integer from public.projects), 5, 'active members see public, member and explicitly joined private projects');
-select is((select count(*)::integer from public.profiles), 3, 'members see active member profiles but not private profiles');
+select is((select count(*)::integer from public.projects where id in ('20000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000003')), 3, 'active members see public, member and explicitly joined private projects');
+select is((select count(*)::integer from public.profiles where id in ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000003')), 2, 'members see member-visible profiles but not private profiles');
 select lives_ok($$update public.profiles set display_name = 'Alpha Updated' where id = '10000000-0000-0000-0000-000000000001'$$, 'member can edit own profile');
 select lives_ok($test$do $body$ declare changed integer; begin
   update public.profiles set display_name = 'Attempt' where id = '10000000-0000-0000-0000-000000000002';
@@ -95,7 +95,7 @@ select throws_ok('select count(*) from public.invitations', '42501', null, 'memb
 select throws_ok($$insert into public.project_memberships (project_id, user_id, role) values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'maintainer')$$, '42501', null, 'member cannot grant project roles');
 select is((select count(*)::integer from public.project_follows where user_id = '10000000-0000-0000-0000-000000000001'), 1, 'member sees own follows');
 select lives_ok($$insert into public.project_follows (project_id) values ('20000000-0000-0000-0000-000000000001') on conflict (project_id, user_id) do nothing$$, 'retrying a follow is idempotent');
-select is((select count(*)::integer from public.project_follows), 1, 'retry creates no duplicate follow');
+select is((select count(*)::integer from public.project_follows where user_id = '10000000-0000-0000-0000-000000000001'), 1, 'retry creates no duplicate follow');
 select lives_ok($$update public.profiles set display_name = 'Alpha Updated' where id = '10000000-0000-0000-0000-000000000001'$$, 'retrying a profile update is safe');
 select is((select display_name from public.profiles where id = '10000000-0000-0000-0000-000000000001'), 'Alpha Updated', 'profile retry preserves requested value');
 reset role;
@@ -103,9 +103,9 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select is((select count(*)::integer from public.projects), 4, 'other active member cannot read private project without membership');
-select is((select count(*)::integer from public.profiles), 3, 'private profile remains hidden from another member');
-select is((select count(*)::integer from public.project_follows), 0, 'other member cannot read the first member follows');
+select is((select count(*)::integer from public.projects where id in ('20000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000003')), 2, 'other active member cannot read private project without membership');
+select is((select count(*)::integer from public.profiles where id in ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000003')), 2, 'private profile remains hidden from another member');
+select is((select count(*)::integer from public.project_follows where user_id = '10000000-0000-0000-0000-000000000001'), 0, 'other member cannot read the first member follows');
 with removed as (delete from public.project_follows where user_id = '10000000-0000-0000-0000-000000000001' returning *)
 select is((select count(*)::integer from removed), 0, 'other member cannot delete the first member follows');
 select throws_ok($$insert into public.project_follows (project_id) values ('20000000-0000-0000-0000-000000000003')$$, '42501', null, 'other member cannot follow an inaccessible private project');
@@ -113,7 +113,7 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
-select is((select count(*)::integer from public.project_follows), 1, 'cross-member deletion leaves the original follow intact');
+select is((select count(*)::integer from public.project_follows where user_id = '10000000-0000-0000-0000-000000000001'), 1, 'cross-member deletion leaves the original follow intact');
 select lives_ok($$delete from public.project_follows where project_id = '20000000-0000-0000-0000-000000000001'$$, 'member can unfollow own project');
 with removed as (delete from public.project_follows where project_id = '20000000-0000-0000-0000-000000000001' returning *)
 select is((select count(*)::integer from removed), 0, 'retrying unfollow is a no-op');

@@ -20,6 +20,7 @@ import com.tnhc.community.data.ProjectRepository
 import com.tnhc.community.data.CommunityRepository
 import com.tnhc.community.data.Project
 import com.tnhc.community.data.CommunitySession
+import com.tnhc.community.data.loadAllProjects
 import com.tnhc.community.BuildConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -90,7 +91,7 @@ fun CommunityApp(
         liveLoading = true
         liveLoadError = false
         try {
-            liveProjects = communityRepository.loadProjects().projects
+            liveProjects = communityRepository.loadAllProjects()
             liveLoadError = false
         } catch (cancelled: CancellationException) {
             throw cancelled

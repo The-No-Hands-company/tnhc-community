@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.tnhc.community.data.Project
@@ -104,6 +105,27 @@ fun ProjectDetail(
             Text("Current focus", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
             Text(project.focus)
+        }
+        item {
+            val uriHandler = LocalUriHandler.current
+            if (project.websiteUrl != null || project.repositoryUrl != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    project.websiteUrl?.let { url ->
+                        OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.testTag("project-website")) {
+                            Text("Visit website")
+                        }
+                    }
+                    project.repositoryUrl?.let { url ->
+                        OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.testTag("project-repository")) {
+                            Text("Source repository")
+                        }
+                    }
+                }
+            }
+            project.statusAsOf?.let {
+                Spacer(Modifier.height(8.dp))
+                Text("Source date · $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         item {
             Text("Interests", style = MaterialTheme.typography.titleMedium)
