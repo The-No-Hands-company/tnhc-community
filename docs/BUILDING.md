@@ -25,13 +25,21 @@ TNHC_PUBLISHABLE_KEY=<local-publishable-key>
 `10.0.2.2` routes from the Android emulator to services on the development computer. Physical phones need a reachable computer address on the same network and a deliberate firewall/router setup; do not expose the development backend publicly. Without these two settings, debug builds launch the clearly labelled fictional demo preview. Release builds require an HTTPS backend URL and a publishable key.
 
 ```sh
-./gradlew :app:assembleMemberDebug :app:assembleFounderDebug
-./gradlew :app:testMemberDebugUnitTest :app:testFounderDebugUnitTest
-./gradlew :app:lintMemberDebug :app:lintFounderDebug
+./gradlew :app:verifyBothDebugApps
 ./gradlew :app:connectedMemberDebugAndroidTest :app:connectedFounderDebugAndroidTest
 ```
 
 On Windows, use `gradlew.bat`. The connected test command requires a booted emulator or an attached phone with USB debugging enabled. If a headless emulator segfaults under SwiftShader, start it with `-gpu host -feature -Vulkan`.
+
+`verifyBothDebugApps` runs Member and Founder unit tests and lint, compiles both instrumentation-test suites, and builds both APKs from the same checkout. GitHub Actions runs this task on pushes and pull requests, then publishes the two APKs together under an artifact named for the commit SHA.
+
+With a phone connected and USB app installs allowed by Android, install both builds from the same checkout with:
+
+```sh
+./gradlew :app:installBothDebugApps
+```
+
+The builds remain separate installed apps so Founder controls stay in the private Founder package. A Git push updates source control; installing the paired APKs updates the apps on a device.
 
 Member debug APK: `app/build/outputs/apk/member/debug/app-member-debug.apk`.
 Founder debug APK: `app/build/outputs/apk/founder/debug/app-founder-debug.apk`.
@@ -42,10 +50,11 @@ adb install -r app/build/outputs/apk/founder/debug/app-founder-debug.apk
 adb shell am start -n com.tnhc.community.founder.debug/com.tnhc.community.MainActivity
 ```
 
-The Founder flavor only includes the Founder navigation and console. The server
-must independently confirm the signed-in account's single `founder` role
-before the console is shown. Provision and recover that role only through the
-operator procedure in [`../backend/README.md`](../backend/README.md). Neither
+The Founder flavor adds its private Founder navigation and console to the same
+shared community app. The server must independently confirm the signed-in
+account's single `founder` role before the console is shown. Provision and
+recover that role only through the operator procedure in
+[`../backend/README.md`](../backend/README.md). Neither
 APK contains service-role credentials or a Founder secret. Founder actions
 apply to in-app members, projects, topics, posts/comments and allow-listed app
 settings; general private-message access and host/deployment operations stay

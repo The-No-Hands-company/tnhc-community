@@ -78,6 +78,27 @@ android {
 
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
+tasks.register("verifyBothDebugApps") {
+    group = "verification"
+    description = "Tests, lints, compiles UI tests for, and builds both Community debug apps."
+    dependsOn(
+        "testMemberDebugUnitTest",
+        "testFounderDebugUnitTest",
+        "lintMemberDebug",
+        "lintFounderDebug",
+        "compileMemberDebugAndroidTestKotlin",
+        "compileFounderDebugAndroidTestKotlin",
+        "assembleMemberDebug",
+        "assembleFounderDebug",
+    )
+}
+
+tasks.register("installBothDebugApps") {
+    group = "install"
+    description = "Installs both Member and Founder debug apps on a connected Android device."
+    dependsOn("installMemberDebug", "installFounderDebug")
+}
+
 dependencies {
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)

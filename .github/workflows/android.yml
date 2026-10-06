@@ -1,4 +1,4 @@
-name: Android foundation
+name: Android apps
 on:
   push:
     branches: [main]
@@ -18,12 +18,14 @@ jobs:
       - uses: android-actions/setup-android@v4
       - name: Install Android SDK packages
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Test, lint and build
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Verify both app variants
+        run: ./gradlew :app:verifyBothDebugApps
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-development-build-and-reports
+          name: tnhc-community-android-${{ github.sha }}
           path: |
-            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/member/debug/app-member-debug.apk
+            app/build/outputs/apk/founder/debug/app-founder-debug.apk
             app/build/reports/
+          if-no-files-found: warn
