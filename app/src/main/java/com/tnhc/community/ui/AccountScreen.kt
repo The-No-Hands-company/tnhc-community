@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -154,6 +155,11 @@ fun AccountScreen(repository: CommunityRepository) {
                 }
             }, modifier = Modifier.fillMaxWidth().testTag("account-sign-out")) { Text("Sign out") }
         }
+        val uriHandler = LocalUriHandler.current
+        TextButton(
+            onClick = { uriHandler.openUri("https://tnhc.dev/charter") },
+            modifier = Modifier.testTag("account-charter"),
+        ) { Text("The TNHC Charter") }
     }
         message?.let { feedback ->
             Snackbar(Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp, vertical = 8.dp)) { Text(feedback) }

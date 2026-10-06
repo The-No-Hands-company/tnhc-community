@@ -126,6 +126,7 @@ class CommunityAppTest {
         compose.onNodeWithTag("community-join-start-here").performClick()
         compose.onNodeWithTag("tab-Profile").assertIsSelected()
         compose.onNodeWithText("New accounts require an invitation from TNHC.").assertIsDisplayed()
+        compose.onNodeWithTag("account-charter").performScrollTo().assertExists()
         assertTrue(repository.membershipChanges.isEmpty())
     }
 
