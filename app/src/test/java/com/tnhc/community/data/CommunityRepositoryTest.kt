@@ -19,6 +19,21 @@ class CommunityRepositoryTest {
     }
 
     @Test
+    fun postingAccessIsCheckedByTheRemoteAndFailsClosedWithoutASession() = runBlocking {
+        val remote = FakeCommunityRemote().apply {
+            sessions.value = CommunitySession("member-id")
+            activeMember = true
+        }
+        val repository = DefaultCommunityRepository(remote)
+
+        assertEquals(true, repository.isActiveMember())
+        remote.activeMember = false
+        assertEquals(false, repository.isActiveMember())
+        remote.sessions.value = null
+        assertEquals(false, repository.isActiveMember())
+    }
+
+    @Test
     fun signInPublishesSessionAndSignOutClearsIt() = runBlocking {
         val remote = FakeCommunityRemote()
         val repository = DefaultCommunityRepository(remote)
@@ -172,6 +187,7 @@ class CommunityRepositoryTest {
         var profileUpdate: ProfileUpdate? = null
         var failure: RuntimeException? = null
         var founder = false
+        var activeMember = false
         var pages: Map<String?, ProjectPage> = emptyMap()
         val requestedCursors = mutableListOf<String?>()
         var topics: List<CommunityTopic> = emptyList()
@@ -180,6 +196,7 @@ class CommunityRepositoryTest {
         var createdTopicPost: TopicPostInput? = null
 
         override suspend fun isFounder() = founder
+        override suspend fun isActiveMember() = activeMember
 
         override suspend fun signIn(email: String, password: String) {
             failure?.let { throw it }

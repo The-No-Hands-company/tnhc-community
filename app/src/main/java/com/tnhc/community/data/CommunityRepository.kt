@@ -84,6 +84,7 @@ data class CommunityPost(
 interface CommunityRepository {
     val session: StateFlow<CommunitySession?>
     suspend fun isFounder(): Boolean = false
+    suspend fun isActiveMember(): Boolean = false
     fun handleAuthLink(intent: Intent)
     suspend fun signIn(email: String, password: String)
     suspend fun signOut()
@@ -103,6 +104,7 @@ interface CommunityRepository {
 interface CommunityRemoteDataSource {
     val sessions: StateFlow<CommunitySession?>
     suspend fun isFounder(): Boolean = false
+    suspend fun isActiveMember(): Boolean = false
     fun handleAuthLink(intent: Intent)
     suspend fun signIn(email: String, password: String)
     suspend fun signOut()
@@ -122,6 +124,7 @@ interface CommunityRemoteDataSource {
 class DefaultCommunityRepository(private val remote: CommunityRemoteDataSource) : CommunityRepository {
     override val session: StateFlow<CommunitySession?> get() = remote.sessions
     override suspend fun isFounder() = remote.isFounder()
+    override suspend fun isActiveMember() = session.value != null && remote.isActiveMember()
     override fun handleAuthLink(intent: Intent) = remote.handleAuthLink(intent)
 
     override suspend fun signIn(email: String, password: String) = remote.signIn(email.trim(), password)
@@ -293,6 +296,11 @@ class SupabaseCommunityRemoteDataSource internal constructor(internal val client
             }
             limit(1)
         }.decodeList<PlatformRoleRecord>().isNotEmpty()
+    }
+
+    override suspend fun isActiveMember(): Boolean {
+        if (sessions.value == null) return false
+        return client.postgrest.rpc("viewer_is_active_member").decodeAs<Boolean>()
     }
 
     init {

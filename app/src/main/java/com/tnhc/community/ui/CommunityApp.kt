@@ -193,10 +193,15 @@ fun CommunityApp(
                             TextButton(onClick = { followAttempt++ }) { Text("Retry") }
                         }
                     }
-                    selectedTab == "Community" -> UpcomingScreen(
-                        "Find your people.", "A place for shared curiosity",
-                        "Discuss game development, software, design and hardware across projects. Topic conversations are planned for alpha 0.0.3.",
-                        Icons.Outlined.Groups, browse,
+                    selectedTab == "Community" && communityRepository != null ->
+                        CommunityScreen(communityRepository, session) {
+                            selectedTab = Destination.Profile.name
+                            projectId = null
+                        }
+                    selectedTab == "Community" -> StatusScreen(
+                        "Community needs a connection",
+                        "Connect to the TNHC community backend to browse shared topics and posts.",
+                        "Explore projects", browse,
                     )
                     selectedTab == Destination.Founder.name && founderAccess == FounderAccess.Allowed ->
                         founderConsoleContent()

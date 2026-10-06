@@ -7,7 +7,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tnhc.community.data.DemoProjectRepository
 import com.tnhc.community.data.CommunityRepository
+import com.tnhc.community.data.CommunityPost
 import com.tnhc.community.data.CommunitySession
+import com.tnhc.community.data.CommunityTopic
 import com.tnhc.community.data.MemberProfile
 import com.tnhc.community.data.Project
 import com.tnhc.community.data.ProjectFilter
@@ -67,6 +69,117 @@ class CommunityAppTest {
         compose.onNodeWithText("Current focus").assertExists()
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithTag("project-search").assertIsDisplayed()
+    }
+
+    @Test fun communityShowsPublicTopicsAndTheirVisiblePosts() {
+        val repository = FakeCommunityRepository()
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.waitUntil(5_000) { repository.topicLoads > 0 }
+        compose.onNodeWithText("Start Here").assertIsDisplayed()
+        compose.onNodeWithText("Welcome to the TNHC community.").assertIsDisplayed()
+    }
+
+    @Test fun signedInMemberCanJoinPostAndLeaveACommunity() {
+        val repository = FakeCommunityRepository().apply {
+            currentSession.value = CommunitySession("member-1")
+        }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.waitUntil(5_000) { repository.topicLoads > 0 }
+        compose.onNodeWithTag("community-join-start-here").performClick()
+        compose.onNodeWithTag("community-topic-start-here").performClick()
+        compose.onNodeWithTag("community-post-composer").performTextInput("Hello builders")
+        compose.onNodeWithTag("community-post-submit").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            repository.createdPosts.contains("Hello builders") &&
+                compose.onAllNodesWithText("Hello builders").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Hello builders").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("community-leave").performScrollTo().performClick()
+        compose.onNodeWithTag("community-post-composer").assertDoesNotExist()
+        assertEquals(listOf("start-here" to true, "start-here" to false), repository.membershipChanges)
+    }
+
+    @Test fun inactiveMemberCannotSeePostComposer() {
+        val repository = FakeCommunityRepository().apply {
+            currentSession.value = CommunitySession("member-1")
+            joinedTopics += "start-here"
+            activeMember = false
+        }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithTag("community-topic-start-here").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithText("Your account is not active for posting right now.").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Your account is not active for posting right now.").assertIsDisplayed()
+        compose.onNodeWithTag("community-post-composer").assertDoesNotExist()
+    }
+
+    @Test fun visitorCanReadTopicsButJoiningLeadsToInviteOnlySignIn() {
+        val repository = FakeCommunityRepository()
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.waitUntil(5_000) { repository.topicLoads > 0 }
+        compose.onNodeWithText("Start Here").assertIsDisplayed()
+        compose.onNodeWithTag("community-join-start-here").performClick()
+        compose.onNodeWithTag("tab-Profile").assertIsSelected()
+        compose.onNodeWithText("New accounts require an invitation from TNHC.").assertIsDisplayed()
+        assertTrue(repository.membershipChanges.isEmpty())
+    }
+
+    @Test fun communityLoadFailureCanBeRetried() {
+        val repository = FakeCommunityRepository().apply { topicLoadFailure = true }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithText("Communities could not load").assertIsDisplayed()
+        compose.runOnIdle { repository.topicLoadFailure = false }
+        compose.onNodeWithTag("community-retry").performClick()
+        compose.onNodeWithText("Start Here").assertIsDisplayed()
+    }
+
+    @Test fun emptyTopicFeedExplainsHowToStart() {
+        val repository = FakeCommunityRepository().apply { topicPosts.clear() }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithTag("community-topic-start-here").performClick()
+        compose.onNodeWithText("No posts yet in this community.").assertIsDisplayed()
+    }
+
+    @Test fun topicPostLoadFailureCanBeRetried() {
+        val repository = FakeCommunityRepository().apply { topicPostLoadFailure = true }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithTag("community-topic-start-here").performClick()
+        compose.onNodeWithText("Posts could not load.").assertIsDisplayed()
+        compose.runOnIdle { repository.topicPostLoadFailure = false }
+        compose.onNodeWithTag("community-feed-retry").performClick()
+        compose.onNodeWithText("Welcome to the TNHC community.").assertIsDisplayed()
+    }
+
+    @Test fun failedCommunityPostKeepsDraftAndExplainsFailure() {
+        val repository = FakeCommunityRepository().apply {
+            currentSession.value = CommunitySession("member-1")
+            postCreateFailure = true
+        }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithTag("community-join-start-here").performClick()
+        compose.onNodeWithTag("community-topic-start-here").performClick()
+        compose.onNodeWithTag("community-post-composer").performTextInput("Please keep this draft")
+        compose.onNodeWithTag("community-post-submit").performScrollTo().performClick()
+        compose.onNodeWithText("Your post could not be published. Check your connection and try again.")
+            .performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("community-post-composer").assertTextContains("Please keep this draft")
+        assertTrue(repository.createdPosts.isEmpty())
+    }
+
+    @Test fun emptyCommunityCatalogueExplainsThereAreNoTopicsYet() {
+        val repository = FakeCommunityRepository().apply { topicCatalogue = emptyList() }
+        compose.setContent { TnhcTheme { CommunityApp(communityRepository = repository) } }
+        compose.onNodeWithTag("tab-Community").performClick()
+        compose.onNodeWithText("No communities yet").assertIsDisplayed()
     }
 
     @Test fun memberBuildNeverShowsFounderNavigation() {
@@ -371,6 +484,18 @@ class CommunityAppTest {
         var savedInterests: List<String> = emptyList()
         var passwordUpdates = 0
         var profileLoads = 0
+        var topicLoads = 0
+        var topicLoadFailure = false
+        var topicCatalogue = listOf(CommunityTopic("start-here", "start-here", "Start Here", "Introductions and community news", "public"))
+        val membershipChanges = mutableListOf<Pair<String, Boolean>>()
+        val createdPosts = mutableListOf<String>()
+        val joinedTopics = mutableSetOf<String>()
+        val topicPosts = mutableListOf(
+            CommunityPost("welcome", "founder-1", "start-here", "Welcome to the TNHC community.", "2026-10-01T12:00:00Z"),
+        )
+        var topicPostLoadFailure = false
+        var postCreateFailure = false
+        var activeMember = true
         var founderRole = false
         var founderRoleFailure = false
         var founderRoleChecks = 0
@@ -379,6 +504,7 @@ class CommunityAppTest {
             if (founderRoleFailure) error("Role lookup unavailable")
             return founderRole
         }
+        override suspend fun isActiveMember() = activeMember
         var projectLoader: (suspend () -> ProjectPage)? = null
         private val project = DemoProjectRepository.load().first { it.id == "demo-orbit" }.copy(isDemo = false)
         override fun handleAuthLink(intent: android.content.Intent) = Unit
@@ -400,6 +526,25 @@ class CommunityAppTest {
         override suspend fun setProjectFollow(projectId: String, followed: Boolean) {
             followChanges += projectId to followed
             if (followed) followedProjects += projectId else followedProjects -= projectId
+        }
+        override suspend fun loadTopics(): List<CommunityTopic> {
+            topicLoads++
+            if (topicLoadFailure) error("Synthetic community lookup failure")
+            return topicCatalogue
+        }
+        override suspend fun loadJoinedTopicIds() = joinedTopics.toSet()
+        override suspend fun setTopicMembership(topicId: String, joined: Boolean) {
+            membershipChanges += topicId to joined
+            if (joined) joinedTopics += topicId else joinedTopics -= topicId
+        }
+        override suspend fun loadTopicPosts(topicId: String): List<CommunityPost> {
+            if (topicPostLoadFailure) error("Synthetic post lookup failure")
+            return topicPosts.filter { it.topicId == topicId }.toList()
+        }
+        override suspend fun createTopicPost(topicId: String, body: String) {
+            if (postCreateFailure) error("Synthetic post creation failure")
+            createdPosts += body
+            topicPosts += CommunityPost("post-${topicPosts.size}", "member-1", topicId, body, "2026-10-06T12:00:00Z")
         }
     }
 
